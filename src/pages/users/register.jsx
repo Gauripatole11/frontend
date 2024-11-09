@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Mail, User, BadgeCheck } from "lucide-react";
+import { Link } from 'react-router-dom';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -161,9 +162,9 @@ const RegisterPage = () => {
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-center text-gray-500">
             Already have an account?{' '}
-            <a href="#" className="text-blue-600 hover:underline">
+            <Link to="/login" className="text-blue-600 hover:underline">
               Sign in
-            </a>
+            </Link>
           </div>
         </CardFooter>
       </Card>

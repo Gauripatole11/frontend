@@ -1,9 +1,36 @@
 import axioxInstance from './api.service';
 
 export const authService = {
-  login: async (email) => {
+  loginBegin: async (payload) => {
     try {
-      const response = await axioxInstance.post('/auth/login', { email });
+      const response = await axioxInstance.post('/user/login/begin', payload);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  loginComplete: async (payload) => {
+    try {
+      const response = await axioxInstance.post('/user/login/complete', payload);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  registerBegin: async (payload) => {
+    try {
+      const response = await axioxInstance.post('/user/register/begin', payload);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  registerComplete: async (payload) => {
+    try {
+      const response = await axioxInstance.post('/user/register/complete', payload);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

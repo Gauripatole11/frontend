@@ -39,7 +39,6 @@ const AdminLogin = () => {
     }
     catch(er){
       toast({
-        title: "Error",
         description: er?.message,
       })
       console.log(er)
