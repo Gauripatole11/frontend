@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 
@@ -6,16 +6,24 @@ import { Button } from "@/components/ui/button";
 const AdminDashboard = () => {
     const navigate = useNavigate();
 
+    const [user, setUser] = useState(null)
+
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        localStorage.clear();
         navigate('/admin/login');
     };
 
+    useEffect(()=>{
+        let user = localStorage.getItem('user')
+        setUser(JSON.parse(user))
+    },[])
+
     return (
+        
         <div className="min-h-screen bg-gray-100 p-4">
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+                    <h1 className="text-3xl font-bold">Welcome, {user?.email}</h1>
                     <Button onClick={handleLogout} variant="destructive">
                         Logout
                     </Button>

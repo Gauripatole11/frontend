@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast"
+
+import { authService } from '../../services/auth.service'
 
 // Admin Login Component
 const AdminLogin = () => {
@@ -10,8 +13,9 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [mfa, setMfa] = useState('');
   const navigate = useNavigate();
+  const { toast } = useToast()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Add your admin login logic here
     // On successful login:
@@ -21,18 +25,27 @@ const AdminLogin = () => {
       "password": password,
       "mfaCode": mfa
     });
+    try{
+      let result = await authService.adminLogin(raw);
+      if(result && result.data){
+        let token = result.data.token;
+        let admin = result.data.admin;
+  
+        await localStorage.setItem('token', token);
+        await localStorage.setItem('user', JSON.stringify(admin))
+        await localStorage.setItem('role', 'admin')
+        navigate('/admin/dashboard');
+      }
+    }
+    catch(er){
+      toast({
+        title: "Error",
+        description: er?.message,
+      })
+      console.log(er)
+    }
     
-    const requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow"
-    };
     
-    fetch(`${process.env.API}/admin/login`, requestOptions)
-      .then((response) => response.text())
-      .then((result) => console.log(result))
-      .catch((error) => console.error(error));
   };
 
   return (

@@ -1,4 +1,4 @@
-import axioxInstance from '.api.service';
+import axioxInstance from './api.service';
 
 export const authService = {
   login: async (email) => {
@@ -10,11 +10,12 @@ export const authService = {
     }
   },
 
-  adminLogin: async (email) => {
+  adminLogin: async (payload) => {
     try {
-      const response = await axioxInstance.post('/auth/admin/login', { email });
+      const response = await axioxInstance.post('/admin/login', payload);
       return response.data;
     } catch (error) {
+        
       throw error.response?.data || error.message;
     }
   },
@@ -43,10 +44,12 @@ export const authService = {
 
   getProfile: async () => {
     try {
-      const response = await axioxInstance.get('/auth/profile');
-      return response.data;
+      let user = await localStorage.getItem('user');
+      return JSON.parse(user);
     } catch (error) {
       throw error.response?.data || error.message;
+      return null;
+      
     }
   }
 };
