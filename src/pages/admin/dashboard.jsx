@@ -12,9 +12,7 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -25,18 +23,19 @@ import {
 import {
   Avatar,
   AvatarFallback,
-  AvatarImage,
 } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import {
   MoreVertical,
@@ -50,9 +49,14 @@ import {
   User
 } from "lucide-react";
 import { adminService } from '../../services/admin.service';
+import { Mail, Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [email, setEmail] = useState('');
   const [user, setUser] = useState(null);
+  const [keyID, setkeyID] = useState(null);
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -103,6 +107,97 @@ const AdminDashboard = () => {
     });
   };
 
+
+  const handleRevoke = async (keyId) => {
+    setLoading(true)
+    try {
+
+      const result = await adminService.revoke({
+        keyId
+      });
+      if (result?.data) {
+        await getKeys()
+
+        toast({
+          description: "Key Revoked"
+        });
+      }
+    } catch (err) {
+      toast({
+        description: err?.message || "Failed to revoke key",
+        variant: "destructive"
+      });
+    }
+    finally {
+      setLoading(false)
+    }
+  };
+
+  useEffect(() => {
+    if (isModalOpen == false) {
+      setLoading(false)
+    }
+  }, [isModalOpen])
+
+  const handleAssign = async (keyId) => {
+    setIsModalOpen(true)
+    setkeyID(keyId)
+  };
+
+  const handleAssignClick = async () => {
+    setLoading(true)
+    try {
+      const result = await adminService.assign({
+        keyId: keyID,
+        email
+      });
+      if (result?.data) {
+        await getKeys()
+
+        toast({
+          description: "Key Assigned"
+        });
+        setIsModalOpen(false)
+
+      }
+    } catch (err) {
+      toast({
+        description: err?.message || "Failed to assign key",
+        variant: "destructive"
+      });
+    }
+    finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGenerateKey = async()=>{
+    setLoading(true)
+    // try {
+    //   const result = await adminService.assign({
+    //     keyId: keyID,
+    //     email
+    //   });
+    //   if (result?.data) {
+    //     await getKeys()
+
+    //     toast({
+    //       description: "Key Assigned"
+    //     });
+    //     setIsModalOpen(false)
+
+    //   }
+    // } catch (err) {
+    //   toast({
+    //     description: err?.message || "Failed to assign key",
+    //     variant: "destructive"
+    //   });
+    // }
+    // finally {
+    //   setLoading(false)
+    // }
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-7xl mx-auto">
@@ -134,7 +229,7 @@ const AdminDashboard = () => {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleGenerateKey}>
                   <Shield className="h-4 w-4 mr-2" />
                   Generate New Key
                 </Button>
@@ -190,9 +285,9 @@ const AdminDashboard = () => {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                {key.status === 'active' ? (
+                                {key.status === 'assigned' ? (
                                   <DropdownMenuItem
-                                    onClick={() => handleKeyAction(key.id, 'Revoked', key.keyName)}
+                                    onClick={() => handleRevoke(key._id)}
                                     className="text-red-600"
                                   >
                                     <Ban className="w-4 h-4 mr-2" />
@@ -200,11 +295,11 @@ const AdminDashboard = () => {
                                   </DropdownMenuItem>
                                 ) : (
                                   <DropdownMenuItem
-                                    onClick={() => handleKeyAction(key.id, 'Reactivated', key.keyName)}
+                                    onClick={() => handleAssign(key._id)}
                                     className="text-green-600"
                                   >
                                     <RefreshCcw className="w-4 h-4 mr-2" />
-                                    Reactivate Key
+                                    Assign Key
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -219,7 +314,59 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+
       </div>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Assign Key</DialogTitle>
+            <DialogDescription>
+              Enter the email address to assign this key.
+            </DialogDescription>
+          </DialogHeader>
+          <form >
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email address</Label>
+                <div className="relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                    disabled={loading}
+                    required
+                  />
+                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading} onClick={handleAssignClick}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Assigning...
+                  </>
+                ) : (
+                  'Assign Key'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

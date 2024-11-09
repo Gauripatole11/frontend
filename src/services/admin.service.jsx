@@ -19,21 +19,27 @@ export const adminService = {
     }
   },
 
-  updateUser: async (userId, userData) => {
+
+  revoke: async (payload) => {
     try {
-      const response = await axioxInstance.put(`/admin/users/${userId}`, userData);
+      const response = await axioxInstance.post(`/admin/keys/revoke`, payload);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
   },
 
-  deleteUser: async (userId) => {
+
+  assign: async (payload) => {
     try {
-      const response = await axioxInstance.delete(`/admin/users/${userId}`);
+      const response = await axioxInstance.post(`/admin/keys/assign`, payload);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
-  }
+  },
+
+
+  
+
 };
