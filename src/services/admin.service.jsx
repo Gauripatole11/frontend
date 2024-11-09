@@ -10,9 +10,9 @@ export const adminService = {
     }
   },
 
-  getAllUsers: async (page = 1, limit = 10) => {
+  getAllKeys: async () => {
     try {
-      const response = await axioxInstance.get(`/admin/users?page=${page}&limit=${limit}`);
+      const response = await axioxInstance.get(`/admin/keys`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

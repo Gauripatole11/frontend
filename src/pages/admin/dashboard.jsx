@@ -28,12 +28,20 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
-import { 
-  MoreVertical, 
-  Key, 
-  Shield, 
+import {
+  MoreVertical,
+  Key,
+  Shield,
   LogOut,
   CheckCircle,
   XCircle,
@@ -41,50 +49,49 @@ import {
   Ban,
   User
 } from "lucide-react";
+import { adminService } from '../../services/admin.service';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
+    const user = localStorage.getItem('user');
+    if (user) {
+      setUser(JSON.parse(user));
     }
+    getKeys();
   }, []);
-  
+
   // Mock data - replace with your actual data
-  const [apiKeys] = useState([
-    {
-      id: 'key_1',
-      keyName: 'Production API Key',
-      assignedTo: 'John Doe',
-      status: 'active',
-      createdAt: '2024-03-15',
-    },
-    {
-      id: 'key_2',
-      keyName: 'Development API Key',
-      assignedTo: 'Jane Smith',
-      status: 'revoked',
-      createdAt: '2024-03-10',
-    },
-    {
-      id: 'key_3',
-      keyName: 'Testing API Key',
-      assignedTo: 'Mike Johnson',
-      status: 'active',
-      createdAt: '2024-03-05',
-    },
-  ]);
+  const [apiKeys, setApiKeys] = useState([]);
+
+  const getKeys = async () => {
+    setLoading(true)
+    try {
+      const result = await adminService.getAllKeys();
+      if (result?.data) {
+        setApiKeys(result.data);
+      }
+    } catch (err) {
+      toast({
+        description: err?.message || "Failed to fetch keys",
+        variant: "destructive"
+      });
+    }
+    finally {
+      setLoading(false)
+
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('user');
     toast({
-      title: "Success",
       description: "Logged out successfully",
     });
     navigate('/login');
@@ -92,7 +99,6 @@ const AdminDashboard = () => {
 
   const handleKeyAction = (keyId, action, keyName) => {
     toast({
-      title: "Success",
       description: `${action} ${keyName} successfully`,
     });
   };
@@ -102,8 +108,8 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold">API Keys Dashboard</h1>
-            <p className="text-gray-600 mt-1">Manage your API keys and access</p>
+            <h1 className="text-3xl font-bold">FIDO2 Keys Dashboard</h1>
+            <p className="text-gray-600 mt-1">Manage your FIDO keys and access</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center gap-2">
@@ -128,15 +134,6 @@ const AdminDashboard = () => {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-xl flex items-center">
-                    <Key className="h-5 w-5 mr-2" />
-                    API Keys
-                  </CardTitle>
-                  <CardDescription>
-                    View and manage all API keys
-                  </CardDescription>
-                </div>
                 <Button variant="outline" size="sm">
                   <Shield className="h-4 w-4 mr-2" />
                   Generate New Key
@@ -156,54 +153,66 @@ const AdminDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {apiKeys.map((key) => (
-                      <TableRow key={key.id}>
-                        <TableCell className="font-medium text-left">{key.keyName}</TableCell>
-                        <TableCell className="text-left">{key.assignedTo}</TableCell>
-                        <TableCell className="text-left">
-                          {key.status === 'active' ? (
-                            <Badge className="bg-green-100 text-green-800 border-green-200">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Active
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
-                              <XCircle className="w-3 h-3 mr-1" />
-                              Revoked
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-left">{new Date(key.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {key.status === 'active' ? (
-                                <DropdownMenuItem
-                                  onClick={() => handleKeyAction(key.id, 'Revoked', key.keyName)}
-                                  className="text-red-600"
-                                >
-                                  <Ban className="w-4 h-4 mr-2" />
-                                  Revoke Key
-                                </DropdownMenuItem>
-                              ) : (
-                                <DropdownMenuItem
-                                  onClick={() => handleKeyAction(key.id, 'Reactivated', key.keyName)}
-                                  className="text-green-600"
-                                >
-                                  <RefreshCcw className="w-4 h-4 mr-2" />
-                                  Reactivate Key
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8">
+                          <div className="flex justify-center items-center">
+                            <RefreshCcw className="h-6 w-6 animate-spin" />
+                            <span className="ml-2">Loading...</span>
+                          </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : apiKeys.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8">
+                          No keys found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      apiKeys.map((key) => (
+                        <TableRow key={key.id}>
+                          <TableCell className="font-medium text-left">{key.serialNumber}</TableCell>
+                          <TableCell className="text-left">{key?.currentAssignment?.userId?.email}</TableCell>
+                          <TableCell className="text-left">
+
+                            <Badge className="bg-green-100 text-green-800 border-green-200">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              {key?.status.toUpperCase()}
+                            </Badge>
+
+                          </TableCell>
+                          <TableCell className="text-left">{new Date(key.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {key.status === 'active' ? (
+                                  <DropdownMenuItem
+                                    onClick={() => handleKeyAction(key.id, 'Revoked', key.keyName)}
+                                    className="text-red-600"
+                                  >
+                                    <Ban className="w-4 h-4 mr-2" />
+                                    Revoke Key
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem
+                                    onClick={() => handleKeyAction(key.id, 'Reactivated', key.keyName)}
+                                    className="text-green-600"
+                                  >
+                                    <RefreshCcw className="w-4 h-4 mr-2" />
+                                    Reactivate Key
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
