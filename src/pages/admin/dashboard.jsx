@@ -50,6 +50,8 @@ import {
 } from "lucide-react";
 import { adminService } from '../../services/admin.service';
 import { Mail, Loader2 } from "lucide-react";
+import { authService } from '../../services/auth.service';
+import { commonService } from '../../services/common';
 
 const AdminDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -171,32 +173,6 @@ const AdminDashboard = () => {
     }
   }
 
-  const handleGenerateKey = async()=>{
-    setLoading(true)
-    // try {
-    //   const result = await adminService.assign({
-    //     keyId: keyID,
-    //     email
-    //   });
-    //   if (result?.data) {
-    //     await getKeys()
-
-    //     toast({
-    //       description: "Key Assigned"
-    //     });
-    //     setIsModalOpen(false)
-
-    //   }
-    // } catch (err) {
-    //   toast({
-    //     description: err?.message || "Failed to assign key",
-    //     variant: "destructive"
-    //   });
-    // }
-    // finally {
-    //   setLoading(false)
-    // }
-  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -227,14 +203,6 @@ const AdminDashboard = () => {
 
         <div className="grid gap-4 mb-6">
           <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <Button variant="outline" size="sm" onClick={handleGenerateKey}>
-                  <Shield className="h-4 w-4 mr-2" />
-                  Generate New Key
-                </Button>
-              </div>
-            </CardHeader>
             <CardContent>
               <div className="rounded-md border">
                 <Table>

@@ -1,18 +1,19 @@
 import axioxInstance from './api.service';
 
 export const adminService = {
-  getDashboardStats: async () => {
+
+  getAllKeys: async () => {
     try {
-      const response = await axioxInstance.get('/admin/dashboard/stats');
+      const response = await axioxInstance.get(`/admin/keys`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
   },
 
-  getAllKeys: async () => {
+  generateKey: async () => {
     try {
-      const response = await axioxInstance.get(`/admin/keys`);
+      const response = await axioxInstance.post(`/admin/keys`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
