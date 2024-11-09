@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Formik, Form, Field } from 'formik';
+import * as Yup from 'yup';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,17 +12,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, User, BadgeCheck } from "lucide-react";
+import { Mail, User, BadgeCheck, Loader2 } from "lucide-react";
 import { Link } from 'react-router-dom';
+import { authService } from '../../services/auth.service';
+import { useToast } from "@/hooks/use-toast"
+
+
+// Validation Schema
+const RegisterSchema = Yup.object().shape({
+  firstName: Yup.string()
+    .min(2, 'Too Short!')
+    .max(50, 'Too Long!')
+    .required('First name is required'),
+  lastName: Yup.string()
+    .min(2, 'Too Short!')
+    .max(50, 'Too Long!')
+    .required('Last name is required'),
+  email: Yup.string()
+    .email('Invalid email')
+    .required('Email is required'),
+  employeeId: Yup.string()
+    .matches(/^EMP\d{3,}$/, 'Employee ID must start with EMP followed by at least 3 numbers')
+    .required('Employee ID is required'),
+  department: Yup.string()
+    .required('Department is required')
+});
 
 const RegisterPage = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    employeeId: '',
-    department: ''
-  });
+
+  const { toast } = useToast()
 
   const departments = [
     "Engineering",
@@ -32,25 +52,12 @@ const RegisterPage = () => {
     "Customer Support"
   ];
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleDepartmentChange = (value) => {
-    setFormData(prev => ({
-      ...prev,
-      department: value
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle registration logic here
-    console.log('Registration attempted with:', formData);
+  const initialValues = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    employeeId: '',
+    department: ''
   };
 
   return (
@@ -62,103 +69,146 @@ const RegisterPage = () => {
             Enter your information to register your employee account
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <div className="relative">
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    placeholder="John"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className="pl-10"
-                    required
-                  />
-                  <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+        <Formik
+          initialValues={initialValues}
+          validationSchema={RegisterSchema}
+          onSubmit={async (values, { setSubmitting }) => {
+            // Handle registration logic here
+            console.log('Registration attempted with:', values);
+            setTimeout(() => {
+              setSubmitting(false);
+            }, 1000);
+
+            try {
+              let result = await authService.register(values);
+              toast({
+                description: result.data.messgae
+              })
+            }
+            catch (err) {
+              toast({
+                description: err?.message
+              })
+            }
+          }}
+        >
+          {({ errors, touched, isSubmitting, setFieldValue, values }) => (
+            <Form>
+              <CardContent className="space-y-4">
+                {/* Name Fields */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <div className="relative">
+                      <Field
+                        as={Input}
+                        id="firstName"
+                        name="firstName"
+                        placeholder="John"
+                        className={`pl-10 ${errors.firstName && touched.firstName ? 'border-red-500' : ''}`}
+                      />
+                      <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                      {errors.firstName && touched.firstName && (
+                        <div className="text-red-500 text-sm mt-1">{errors.firstName}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <div className="relative">
+                      <Field
+                        as={Input}
+                        id="lastName"
+                        name="lastName"
+                        placeholder="Doe"
+                        className={`pl-10 ${errors.lastName && touched.lastName ? 'border-red-500' : ''}`}
+                      />
+                      <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                      {errors.lastName && touched.lastName && (
+                        <div className="text-red-500 text-sm mt-1">{errors.lastName}</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <div className="relative">
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    placeholder="Doe"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className="pl-10"
-                    required
-                  />
-                  <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Field
+                      as={Input}
+                      type="email"
+                      id="email"
+                      name="email"
+                      placeholder="john.doe@company.com"
+                      className={`pl-10 ${errors.email && touched.email ? 'border-red-500' : ''}`}
+                    />
+                    <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    {errors.email && touched.email && (
+                      <div className="text-red-500 text-sm mt-1">{errors.email}</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Email Field */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="john.doe@company.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="pl-10"
-                  required
-                />
-                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              </div>
-            </div>
+                {/* Employee ID Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="employeeId">Employee ID</Label>
+                  <div className="relative">
+                    <Field
+                      as={Input}
+                      id="employeeId"
+                      name="employeeId"
+                      placeholder="EMP123"
+                      className={`pl-10 ${errors.employeeId && touched.employeeId ? 'border-red-500' : ''}`}
+                    />
+                    <BadgeCheck className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    {errors.employeeId && touched.employeeId && (
+                      <div className="text-red-500 text-sm mt-1">{errors.employeeId}</div>
+                    )}
+                  </div>
+                </div>
 
-            {/* Employee ID Field */}
-            <div className="space-y-2">
-              <Label htmlFor="employeeId">Employee ID</Label>
-              <div className="relative">
-                <Input
-                  id="employeeId"
-                  name="employeeId"
-                  placeholder="EMP123"
-                  value={formData.employeeId}
-                  onChange={handleChange}
-                  className="pl-10"
-                  required
-                />
-                <BadgeCheck className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              </div>
-            </div>
+                {/* Department Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  <Select
+                    value={values.department}
+                    onValueChange={(value) => setFieldValue('department', value)}
+                  >
+                    <SelectTrigger className={errors.department && touched.department ? 'border-red-500' : ''}>
+                      <SelectValue placeholder="Select a department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept} value={dept.toLowerCase()}>
+                          {dept}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.department && touched.department && (
+                    <div className="text-red-500 text-sm mt-1">{errors.department}</div>
+                  )}
+                </div>
 
-            {/* Department Field */}
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Select 
-                value={formData.department} 
-                onValueChange={handleDepartmentChange}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept} value={dept.toLowerCase()}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button type="submit" className="w-full">
-              Register Account
-            </Button>
-          </form>
-        </CardContent>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Registering...
+                    </>
+                  ) : (
+                    'Register Account'
+                  )}
+                </Button>
+              </CardContent>
+            </Form>
+          )}
+        </Formik>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-center text-gray-500">
             Already have an account?{' '}

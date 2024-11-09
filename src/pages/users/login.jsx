@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast"
 import { authService } from '../../services/auth.service';
 import { commonService } from '../../services/common';
@@ -10,6 +10,8 @@ import { commonService } from '../../services/common';
 const LoginPage = () => {
   const { toast } = useToast()
   const [email, setEmail] = useState('');
+  const navigate = useNavigate();
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,8 +72,7 @@ const LoginPage = () => {
           localStorage.setItem("token", data.token)
           localStorage.setItem("role", data.user?.role)
           localStorage.setItem("user", JSON.stringify(data.user))
-
-
+          navigate('/profile');
         }
 
       }

@@ -47,27 +47,15 @@ export const authService = {
     }
   },
 
-  register: async (userData) => {
+  register: async (payload) => {
     try {
-      const response = await axioxInstance.post('/auth/register', userData);
+      const response = await axioxInstance.post('/user/register', payload);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
   },
 
-  logout: async () => {
-    try {
-      await axioxInstance.post('/auth/logout');
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still remove items even if axioxInstance call fails
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-    }
-  },
 
   getProfile: async () => {
     try {
