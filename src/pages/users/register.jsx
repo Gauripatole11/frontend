@@ -83,7 +83,7 @@ const RegisterPage = () => {
               let result = await authService.register(values);
               console.log(result)
               toast({
-                description: result?.messgae || result?.data?.message
+                description: result?.message || result?.data?.message
               })
             }
             catch (err) {
